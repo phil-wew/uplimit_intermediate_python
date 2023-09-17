@@ -1,7 +1,16 @@
+
+import os
+
+CURRENT_FOLDER_NAME = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIRECTORY = os.path.abspath(os.path.join(CURRENT_FOLDER_NAME, os.pardir))
+
+import sys
+sys.path.append(PARENT_DIRECTORY)
+
 import time
 from typing import List, Dict
 from tqdm import tqdm
-import os
+
 import multiprocessing
 from w1.data_processor import DataProcessor
 import constants
@@ -63,17 +72,17 @@ def get_sales_information(file_path: str) -> Dict:
 # batches the files based on the number of processes
 def batch_files(file_paths: List[str], n_processes: int) -> List[set]:
     if n_processes > len(file_paths):
-        return #### [YOUR CODE HERE] ####
+        return []
 
-    n_per_batch = #### [YOUR CODE HERE] ####
+    n_per_batch = len(file_paths) // n_processes
 
     first_set_len = n_processes * n_per_batch
     first_set = file_paths[0:first_set_len]
-    second_set = #### [YOUR CODE HERE] ####
+    second_set = file_paths[first_set_len:]
 
     batches = [set(file_paths[i:i + n_per_batch]) for i in range(0, len(first_set), n_per_batch)]
     for ind, each_file in enumerate(second_set):
-        #### [YOUR CODE HERE] ####
+        batches[ind].add(each_file)
 
     return batches
 
@@ -144,7 +153,7 @@ def main() -> List[Dict]:
     """
 
     st = time.time()
-    n_processes = 3 # you may modify this number - check out multiprocessing.cpu_count() as well
+    n_processes = 4 # you may modify this number - check out multiprocessing.cpu_count() as well
 
     parser = argparse.ArgumentParser(description="Choose from one of these : [tst|sml|bg]")
     parser.add_argument('--type',
@@ -165,6 +174,13 @@ def main() -> List[Dict]:
 
     ######################################## YOUR CODE HERE ##################################################
     with multiprocessing.Pool(processes=n_processes) as pool:
+        params = [(file_paths, n_process) for n_process, file_paths in enumerate(batches)]
+        revenue_data = pool.starmap(run, params)
+        revenue_data = flatten(revenue_data)
+
+        pool.close()
+        pool.join()
+
         
     ######################################## YOUR CODE HERE ##################################################
 
@@ -172,15 +188,30 @@ def main() -> List[Dict]:
     print("Overall time taken : {}".format(en-st))
 
     ######################################## YOUR CODE HERE ##################################################
+
     for yearly_data in revenue_data:
+        with open(os.path.join(output_save_folder, f'{yearly_data["file_name"]}.json'), 'w') as f:
+            f.write(json.dumps(yearly_data))
+
+        plot_sales_data(yearly_revenue=yearly_data['revenue_per_region'], year=yearly_data["file_name"],
+                        plot_save_path=os.path.join(output_save_folder, f'{yearly_data["file_name"]}.png'))
+
         
 
     ######################################## YOUR CODE HERE ##################################################
         
     # should return revenue data
-    return #### [YOUR CODE HERE] ####
+    return revenue_data
 
 
 if __name__ == '__main__':
     res = main()
     pprint(res)
+#     # print(multiprocessing.cpu_count())
+
+
+#     # file_paths = list(range(11))
+#     # n_processes = 3
+#     # batches = batch_files(file_paths, n_processes)
+
+#     # print(batches)
