@@ -17,7 +17,7 @@ class TestApp(unittest.TestCase):
     def test_health(self):
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200, msg='Response code should be 200')
-        self.assertEqual(response.json(), {"status": "ok"}, msg='Health API check failed')
+        self.assertEqual(response.json(), {"status": "ay-okay"}, msg='Health API check failed')
 
     def test_processes(self):
         response = self.client.get("/processes")
